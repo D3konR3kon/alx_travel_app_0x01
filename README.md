@@ -190,10 +190,10 @@ python manage.py seed --clear
 python manage.py seed --help
 ```
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
-alx_travel_app_0x00/
+alx_travel_app_0x01/
 ├── alx_travel_app/          # Main project directory
 │   ├── settings.py          # Django settings
 │   ├── urls.py             # URL configuration
@@ -214,7 +214,7 @@ alx_travel_app_0x00/
 └── README.md              # This file
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Test Database Connection
 
