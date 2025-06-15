@@ -146,6 +146,8 @@ The application provides RESTful API endpoints for:
 NB: JWT required in Authorization header: Bearer <token> 
 
 GET /api/v1/listings/
+
+POST /api/v1/listings/
 {
     'title': 'New Test Listing',
     'description': 'A new test listing description',
