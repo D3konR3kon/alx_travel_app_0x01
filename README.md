@@ -143,6 +143,7 @@ The application provides RESTful API endpoints for:
 ### Example API Usage
 
 ```python
+NB: JWT required in Authorization header: Bearer <token> 
 
 GET /api/v1/listings/
 {
