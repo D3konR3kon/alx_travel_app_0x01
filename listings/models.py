@@ -229,6 +229,135 @@ class Booking(models.Model):
         )
 
 
+class Payment(models.Model):
+    """
+    Model for handling payment transactions via Chapa API.
+    """
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+        ('refunded', 'Refunded'),
+    ]
+    
+    PAYMENT_METHOD_CHOICES = [
+        ('chapa', 'Chapa'),
+        ('mobile_money', 'Mobile Money'),
+        ('bank_transfer', 'Bank Transfer'),
+        ('card', 'Credit/Debit Card'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    booking = models.OneToOneField(
+        Booking,
+        on_delete=models.CASCADE,
+        related_name='payment',
+        help_text="Associated booking"
+    )
+    
+    # Payment details
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Payment amount"
+    )
+    currency = models.CharField(
+        max_length=3,
+        default='ETB',
+        help_text="Currency code (e.g., ETB, USD)"
+    )
+    
+    # Chapa transaction details
+    chapa_transaction_id = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="Chapa transaction ID"
+    )
+    chapa_reference = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Unique reference for this payment"
+    )
+    chapa_checkout_url = models.URLField(
+        null=True,
+        blank=True,
+        help_text="Chapa checkout URL for payment"
+    )
+    
+    # Payment status and method
+    status = models.CharField(
+        max_length=20,
+        choices=PAYMENT_STATUS_CHOICES,
+        default='pending',
+        help_text="Payment status"
+    )
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PAYMENT_METHOD_CHOICES,
+        default='chapa',
+        help_text="Payment method used"
+    )
+    
+    # Additional fields
+    customer_email = models.EmailField(help_text="Customer email for payment")
+    customer_name = models.CharField(max_length=100, help_text="Customer name")
+    customer_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text="Customer phone number"
+    )
+    
+    # Chapa response data
+    chapa_response_data = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Full response data from Chapa API"
+    )
+    
+    # Verification details
+    verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the payment was verified"
+    )
+    verification_attempts = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of verification attempts"
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['chapa_reference']),
+            models.Index(fields=['chapa_transaction_id']),
+            models.Index(fields=['status']),
+            models.Index(fields=['created_at']),
+        ]
+    
+    def __str__(self):
+        return f"Payment {self.chapa_reference} - {self.status}"
+    
+    def save(self, *args, **kwargs):
+        """Override save to generate reference if not provided."""
+        if not self.chapa_reference:
+            self.chapa_reference = f"ALX-{uuid.uuid4().hex[:8].upper()}"
+        super().save(*args, **kwargs)
+    
+    def is_successful(self):
+        """Check if payment was successful."""
+        return self.status == 'completed'
+    
+    def can_refund(self):
+        """Check if payment can be refunded."""
+        return self.status == 'completed' and self.booking.can_cancel()
+
+
 class Review(models.Model):
     """
     Model for property reviews.
